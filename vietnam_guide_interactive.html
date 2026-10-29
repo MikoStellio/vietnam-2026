@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vietnam Trip · Nov 2–8, 2026 — Interactive Guide</title>
+<meta name="description" content="Interactive Vietnam travel guide: map, food safety, spots and day-by-day plan for a family trip Nov 2-8, 2026.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+ --ink:#2b2b2b;--paper:#fffdf8;--bg:#efe9dd;--accent:#c0392b;--green:#1e7d4f;
+ --blue:#2563a8;--card:#ffffff;--line:#e2d9c8;--muted:#6b6b6b;--chipbg:#f0e8da;
+}
+html.dark{
+ --ink:#ece7dc;--paper:#14181d;--bg:#0e1115;--accent:#ff6b5b;--green:#4fd39a;
+ --blue:#6aa7f0;--card:#1c2229;--line:#2c343e;--muted:#9aa4ad;--chipbg:#242c35;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-tap-highlight-color:transparent}
+a{color:var(--blue)}
+.container{max-width:860px;margin:0 auto;padding:0 14px}
+
+/* Header */
+header.top{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#7a2e22,#c0392b);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+header.top .inner{max-width:860px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+header.top h1{font-size:1.05em;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:10px;width:36px;height:36px;font-size:1.05em;cursor:pointer;flex-shrink:0}
+
+/* Tabs */
+nav.tabs{position:sticky;top:47px;z-index:49;background:var(--paper);border-bottom:2px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+nav.tabs .inner{max-width:860px;margin:0 auto;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav.tabs button{background:none;border:none;color:var(--muted);font-size:.92em;font-weight:600;padding:11px 13px;white-space:nowrap;cursor:pointer;border-bottom:3px solid transparent}
+nav.tabs button.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+main{padding:16px 0 60px}
+.page{display:none}
+.page.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Cards & sections */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.kicker{text-transform:uppercase;letter-spacing:2px;font-size:.72em;color:var(--accent);font-weight:700;margin-bottom:4px}
+h2{font-size:1.35em;line-height:1.25;margin-bottom:8px}
+h3{margin:10px 0 6px;font-size:1.05em;color:var(--accent)}
+p,li{line-height:1.55}
+ul,ol{padding-left:20px;margin:6px 0}
+li{margin-bottom:4px}
+.small{font-size:.83em;color:var(--muted)}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;margin:3px;font-size:.85em}
+
+/* Callouts */
+.tip,.warn,.note,.kid{padding:9px 12px;margin:10px 0;border-radius:0 10px 10px 0;font-size:.93em}
+.tip{background:#eef6ee;border-left:4px solid var(--green)}
+.warn{background:#fdeeee;border-left:4px solid var(--accent)}
+.note{background:#eef3fa;border-left:4px solid var(--blue)}
+.kid{background:#fdf6e7;border-left:4px solid #d9a01b}
+html.dark .tip{background:#15231b}
+html.dark .warn{background:#2a1816}
+html.dark .note{background:#141d29}
+html.dark .kid{background:#262012}
+
+/* Chips */
+.chip{display:inline-block;border-radius:20px;padding:2px 10px;font-size:.78em;font-weight:600;margin:2px 3px;background:var(--chipbg);border:1px solid var(--line)}
+.chip.hot{background:#fdeeee;color:var(--accent)}
+.chip.raw{background:#fff4d9;color:#8a6510}
+.chip.kid{background:#eef6ee;color:var(--green)}
+html.dark .chip.hot{background:#3a2020}
+html.dark .chip.raw{background:#3a341f;color:#d9b45a}
+html.dark .chip.kid{background:#1e2f26;color:#7fd8ab}
+
+/* Search */
+.searchbar{display:flex;gap:8px;margin-bottom:12px}
+.searchbar input,.searchbar select{flex:1;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);padding:9px 12px;font-size:.95em;min-width:0}
+
+/* Spot cards */
+.spot{cursor:pointer}
+.spot summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer}
+.spot summary::-webkit-details-marker{display:none}
+.spot .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.spot .name{font-weight:700;font-size:.98em;flex:1}
+.spot .meta{font-size:.8em;color:var(--muted)}
+.spot .chev{margin-left:auto;color:var(--muted);transition:transform .2s}
+.spot[open] .chev{transform:rotate(90deg)}
+.spot .body{padding-top:8px;font-size:.93em}
+.dot.sapa{background:#c0392b}.dot.nb{background:#1e7d4f}.dot.hanoi{background:#2563a8}
+
+/* Food list */
+.food li{margin-bottom:8px}
+.food .fname{font-weight:700;color:var(--accent)}
+
+/* Timeline */
+.tl{list-style:none;padding-left:0;margin:10px 0;position:relative}
+.tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2.5px;background:var(--line);border-radius:2px}
+.tl li{position:relative;padding-left:22px;margin-bottom:9px}
+.tl li::before{content:"";position:absolute;left:0;top:4px;width:13px;height:13px;border-radius:50%;background:var(--accent);border:2.5px solid var(--paper)}
+.tl .t{font-weight:700;font-size:.85em;color:var(--accent)}
+.dayhead{display:flex;align-items:center;gap:8px;margin:16px 0 4px}
+.daynum{background:var(--accent);color:#fff;border-radius:9px;padding:2px 10px;font-weight:700;font-size:.85em;white-space:nowrap}
+
+/* Map */
+#map{height:420px;border-radius:14px;z-index:1}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.leaflet-popup-content{font-size:.9em;line-height:1.45}
+
+/* Day variant toggle */
+.togglebtns button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:6px 14px;font-size:.88em;font-weight:600;margin-right:6px;cursor:pointer}
+.togglebtns button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Back to top */
+#totop{position:fixed;right:14px;bottom:16px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:1.2em;display:none;z-index:60;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+
+footer{background:var(--paper);border-top:2px solid var(--line);padding:18px 14px;text-align:center;font-size:.85em;color:var(--muted)}
+@media print{header.top,nav.tabs,#totop,.searchbar,.togglebtns,#map,.legend{display:none!important}.page{display:block!important;page-break-after:always}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <h1>Vietnam Trip · Nov 2–8, 2026</h1>
+    <button id="darkbtn" class="iconbtn" title="Toggle dark mode">🌙</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="inner">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="itinerary">Itinerary</button>
+    <button data-tab="map">Map</button>
+    <button data-tab="spots">Spots</button>
+    <button data-tab="food">Food &amp; Safety</button>
+    <button data-tab="pack">Pack</button>
+  </div>
+</nav>
+
+<main class="container">
+
+<!-- ==================== OVERVIEW ==================== -->
+<section id="page-overview" class="page active">
+  <div class="card" style="background:linear-gradient(135deg,#7a2e22,#c0392b);color:#fff;border:none;text-align:center;padding:26px 18px">
+    <div class="kicker" style="color:#ffd9d4">Family travel guide</div>
+    <h2 style="font-size:1.7em;margin-bottom:6px">Spots · Food · Safe Eats</h2>
+    <p style="opacity:.95;font-size:.98em">Companion to <b>vietnam_itinerary_plan.md</b>. Built for a family from the Philippines who wants authentic food without getting sick.</p>
+  </div>
+
+  <div class="card">
+    <div class="kicker">The route at a glance</div>
+    <span class="badge">🇵🇭 PH (Nov 2)</span>
+    <span class="badge">✈️ Hanoi (land Nov 3 ~1 AM)</span>
+    <span class="badge">⛰️ Sapa · Nov 3–4</span>
+    <span class="badge">🛏️ Sleeper bus → Ninh Binh · Nov 5</span>
+    <span class="badge">🚂 Train → Hanoi · Nov 6 ~7:12 PM</span>
+    <span class="badge">✈️ Fly out Nov 8 · 8:25 AM</span>
+  </div>
+
+  <div class="card">
+    <div class="kicker">Start here</div>
+    <h3>The one rule that prevents most stomach trouble</h3>
+    <p style="font-size:1.05em"><b>Hot + busy + local = safe.</b> Eat where locals queue, served piping hot, no ice or tap water. Everything else in this guide follows from that.</p>
+    <div class="tip" style="margin-bottom:6px">Full 7-point food-safety list is on the <b>Food &amp; Safety</b> tab — read it once before you land.</div>
+  </div>
+
+  <div class="card">
+    <h3>Cheat-sheet by region</h3>
+    <p><span class="dot sapa" style="display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px"></span> <b>Sapa:</b> Cat Cat · Mong Coaster · Fansipan · Rong May · Green Valley — eat hotpot, grilled chicken + sticky rice, chestnut cake.</p>
+    <p style="margin-top:8px"><span class="dot nb" style="display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px"></span> <b>Ninh Binh:</b> Bai Dinh · Hoa Lu · Hang Múa (sunrise) · Trang An boats · Bích Động · Tam Coc by bike — eat cơm cháy, bún chả, grilled fish.</p>
+    <p style="margin-top:8px"><span class="dot hanoi" style="display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px"></span> <b>Hanoi:</b> Hoan Kiem · Old Quarter · Train Street · Temple of Literature · egg coffee — eat phở, bún chả, chả cá, bánh mì, chè.</p>
+    <div class="tip"><b>Safety rule #1 again:</b> hot + busy + local = safe. No ice, no tap water, peel your own fruit.</div>
+  </div>
+
+  <div class="card">
+    <h3>Quick links</h3>
+    <p><a href="#" data-goto="itinerary">📅 Day-by-day itinerary →</a></p>
+    <p style="margin-top:6px"><a href="#" data-goto="map">🗺️ Interactive map of all spots →</a></p>
+    <p style="margin-top:6px"><a href="#" data-goto="food">🍜 Food &amp; safety rules →</a></p>
+  </div>
+</section>
+
+<!-- ==================== ITINERARY ==================== -->
+<section id="page-itinerary" class="page">
+  <div class="card">
+    <div class="kicker">Visual day-by-day</div>
+    <h2>Your trip, Nov 2 → Nov 8</h2>
+    <p class="small">Times from the authoritative plan. Budget hints are typical street/local VND per person — rough guides, not quotes.</p>
+
+    <div class="dayhead"><span class="daynum">Day 0 · Nov 2 (Sat)</span> Depart PH</div>
+    <ul class="tl">
+      <li><span class="t">7:00 PM</span> Arrive NAIA T3 → immigration</li>
+      <li><span class="t">10:25 PM</span> Depart for Hanoi (board ~10:05 PM)</li>
+    </ul>
+
+    <div class="dayhead"><span class="daynum">Day 1 · Nov 3 (Sun)</span> Land + Sapa basics</div>
+    <ul class="tl">
+      <li><span class="t">1:05 AM</span> Land Hanoi → limousine van to Sapa (~5 hrs)</li>
+      <li><span class="t">7:00 AM</span> Check in Madame View Homestay + breakfast</li>
+      <li><span class="t">10:30 AM</span> Head to Cat Cat Village; ~11 AM–2 PM village walk + homestay lunch (~3 hrs)</li>
+      <li><span class="t">2:10 PM</span> Moana Cafe (riverside coffee break, 1 hr) — <b>nice-to-have; drop if the family is tired</b></li>
+      <li><span class="t">3:10 PM</span> Mong Village Alpine Coaster (30 min); chestnut cake + free time nearby</li>
+      <li><span class="t">Evening</span> Night market dinner (grill stall with the longest local queue), then prep for Day 2</li>
+    </ul>
+    <div class="kid">👶 Kids: the Alpine Coaster is a family hit — go right after lunch as planned. Grab freshly-baked chestnut cake (<i>bánh khoai lang</i>) nearby.</div>
+    <p class="small" style="margin-top:8px"><b>Budget hint:</b> ~200–400k VND/person for meals + market snacks today (village lunch, night-market grills).</p>
+
+    <div class="dayhead"><span class="daynum">Day 2 · Nov 4 (Mon)</span> Fansipan + big move to Ninh Binh</div>
+    <ul class="tl">
+      <li><span class="t">7:30 AM</span> Head to Sun Station → <b>8 AM–1 PM Fansipan cable-car day tour</b> (buffet lunch included — eat it, you're at 3,000 m)</li>
+      <li><span class="t">2:40 PM</span> Rong May Cloud Dragon glass bridge (~1 hr; ~150k VND/person)</li>
+      <li><span class="t">4:20 PM</span> Green Valley — Mario-kart track + rainbow slide (~1 hr; ~100k VND entry)</li>
+      <li><span class="t">6:00 PM</span> Back to Airbnb; pack up, check out by 8 PM</li>
+      <li><span class="t">8:00–8:40 PM</span> Sit-down dinner in town — hotpot or grilled chicken + rice; leave for the bus ~9:20 PM</li>
+      <li><span class="t">10:00 PM</span> Sleeper bus (HK Busline) → Ninh Binh, ~9 hrs. Bring snacks + neck pillow; download offline maps first.</li>
+    </ul>
+    <div class="kid">👶 Kids: Green Valley is a pure kids' stop — keep cash ready for entry. Summit is cold even in November (5–10 °C): warm jacket required, not optional.</div>
+    <p class="small" style="margin-top:8px"><b>Budget hint:</b> ~250–350k VND/person today (tour incl. lunch + Rong May 150k + Green Valley 100k + dinner).</p>
+
+    <div class="dayhead"><span class="daynum">Day 3 · Nov 5 (Tue)</span> Ninh Binh Day 1</div>
+    <ul class="tl">
+      <li><span class="t">7:00 AM</span> Arrive Ninh Binh → Tam Coc check-in + breakfast (hot phở if a stall is open)</li>
+      <li><span class="t">9:00 AM–12 PM</span> Bai Dinh Pagoda — go as far as energy allows; lower halls + big Buddha are already worth it (free, donations welcome)</li>
+      <li><span class="t">12:00–2:00 PM</span> Lunch in Tam Coc town on the way back: cơm cháy or xôi gà at a busy sit-down place</li>
+      <li><span class="t">2:20–5:00 PM</span> Hoa Lu Ancient Capital — flat, easy cycling; temple fees ~20k VND each</li>
+      <li><span class="t">5:15–8:00 PM</span> Hoa Lu Old Town night market + lantern boat ride on the river; dinner (options limited — pick the place with local customers)</li>
+      <li><span class="t">~8:15 PM</span> Back to Airbnb; pack for early check-out tomorrow</li>
+    </ul>
+    <div class="kid">👶 Kids: 5,000+ steps at Bai Dinh — take it as a family and turn back when tired. Cycling in Hoa Lu is flat and easy; lantern boats are a big evening win.</div>
+    <p class="small" style="margin-top:8px"><b>Budget hint:</b> ~250–350k VND/person (lunch + temple fees + dinner + boat).</p>
+
+    <div class="dayhead"><span class="daynum">Day 4 · Nov 6 (Wed)</span> Sunrise hike → train to Hanoi</div>
+    <ul class="tl">
+      <li><span class="t">5:00 AM</span> Wake up; 5:30 breakfast — congee (<i>cháo</i>) or quick bánh mì if a bakery is open</li>
+      <li><span class="t">6:15–6:50 AM</span> Hang Múa sunrise hike (~500 steep steps) to the limestone-ridge viewpoint</li>
+      <li><span class="t">7:00–10:00 AM</span> Trang An grottoes boat trip — the signature Ninh Binh ride (life jackets provided; tip ~20–50k VND per crew)</li>
+      <li><span class="t">10:20 AM</span> Back to Airbnb, wash up; check out 11:00 and leave luggage</li>
+      <li><span class="t">11:00–12:00 PM</span> Quick sit-down lunch in Tam Coc — bún chả or phở. Your last relaxed meal before the train.</li>
+      <li><span class="t">12:00 PM</span> Rent bikes → Bích Động Pagoda (12:10–1) → Tam Coc riverside by bike (1:10–3:30)</li>
+      <li><span class="t">4:00 PM</span> Return bikes, grab luggage; station 4:15 → <b>train departs 4:51 PM</b></li>
+      <li><span class="t">7:12 PM</span> Arrive Hanoi; ~7:30 check-in. Dinner = busy phở stall (~45–60k) or a local bún chả place, then night-market stroll.</li>
+    </ul>
+    <div class="kid">👶 Kids: Hang Múa is steep — kids can wait at the base or join halfway. Trang An boats are gentle and fun; if the family's tired, drop the separate Tam Coc afternoon loop (Trang An already showed you the scenery).</div>
+    <p class="small" style="margin-top:8px"><b>Budget hint:</b> ~150–250k VND/person (boat tip + lunch + Hanoi dinner) plus train fare per ticket.</p>
+
+    <div class="dayhead"><span class="daynum">Day 5 · Nov 7 (Thu)</span> Full day in Hanoi — pick your pace</div>
+    <div class="togglebtns" style="margin:8px 0">
+      <button id="d5full" class="active">Full day</button>
+      <button id="d5relaxed">Relaxed day</button>
+    </div>
+    <div id="d5-full">
+    <ul class="tl">
+      <li><span class="t">7:00 AM</span> Wake up &amp; prep</li>
+      <li><span class="t">7:30–8:15 AM</span> Breakfast: bánh mì from a busy bakery (~25–40k) or phở gà (lighter than beef)</li>
+      <li><span class="t">8:30–10:30 AM</span> Walk loop: Hoan Kiem Lake → Ngoc Son Temple → St. Joseph's Cathedral (all within 15 min of each other)</li>
+      <li><span class="t">10:45–11:30 AM</span> Egg coffee + bánh flan at Café Giang or a local café — Hanoi's signature, do it once properly</li>
+      <li><span class="t">12:00–1:00 PM</span> The big lunch: bún chả (e.g. Bún Chả Hàng Mành) ~50–70k/person</li>
+      <li><span class="t">1:30–3:00 PM</span> Temple of Literature (~30–50k entry) — calm garden break; rest at Airbnb if needed</li>
+      <li><span class="t">3:30–5:30 PM</span> Old Quarter wandering + souvenirs. Note: the famous Train Street photo moment usually works best ~7–9 AM, so treat this as a street visit.</li>
+      <li><span class="t">6:00–7:30 PM</span> Sit-down local restaurant — chả cá or grilled fish family meal (Vietnamese menu + local families = go)</li>
+      <li><span class="t">8:00–9:30 PM</span> Optional: water puppetry show (~7:30 PM slot, Thang Long; ~150–250k) OR night stroll + chè dessert</li>
+      <li><span class="t">10:00 PM</span> Pack up — early sleep for the 4 AM wake-up</li>
+    </ul>
+    </div>
+    <div id="d5-relaxed" style="display:none">
+    <ul class="tl">
+      <li><span class="t">7:30–8:15 AM</span> Breakfast near the Old Quarter (bánh mì or phở gà)</li>
+      <li><span class="t">8:30–9:45 AM</span> Hoan Kiem Lake loop + Ngoc Son — short, easy family walk; skip the cathedral if tired</li>
+      <li><span class="t">10:00–10:45 AM</span> Egg coffee break (Café Giang or any local café)</li>
+      <li><span class="t">12:00–1:00 PM</span> Bún chả lunch — still the must-do of the day</li>
+      <li><span class="t">1:30–5:00 PM</span> Rest at Airbnb; souvenir run only if there's energy (Old Quarter silk/weaving shops are close)</li>
+      <li><span class="t">6:30–7:30 PM</span> Light sit-down dinner — one proper hot dish, no over-eating before flight day</li>
+      <li><span class="t">8:00–9:00 PM</span> Optional slow night stroll + chè; skip the puppetry show today by design</li>
+      <li><span class="t">9:30 PM</span> Pack up and sleep — you wake at 4 AM</li>
+    </ul>
+    <div class="tip">Why this works either way: everything is walkable, meals are spaced out (no big gaps), and the evening ends light so you're fresh for an early flight.</div>
+    </div>
+    <p class="small" style="margin-top:8px"><b>Budget hint:</b> ~400–650k VND/person on a full day (all meals + entry fees; add puppetry if chosen).</p>
+
+    <div class="dayhead"><span class="daynum">Day 6 · Nov 8 (Fri)</span> Fly home</div>
+    <ul class="tl">
+      <li><span class="t">4:00 AM</span> Wake up &amp; prep — grab a quick bánh mì from an open bakery if you can; otherwise packed snacks</li>
+      <li><span class="t">6:00 AM</span> Airbnb check-out → Noi Bai T2 (be there by ~6 AM as planned; online check-in done the night before)</li>
+      <li><span class="t">7:40–8:10 AM</span> Boarding (flight 5J 745)</li>
+      <li><span class="t">8:25 AM</span> Depart → land PH ~1:15 PM</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== MAP ==================== -->
+<section id="page-map" class="page">
+  <div class="card">
+    <div class="kicker">Visual guide</div>
+    <h2>All your spots on one map</h2>
+    <p class="small">Tap a dot for details + a Directions link (opens Google Maps). Dots are color-coded by region.</p>
+    <div id="map" style="margin-top:10px"></div>
+    <div class="legend">
+      <span class="chip"><span class="dot sapa" style="display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px"></span>Sapa (Nov 3–4)</span>
+      <span class="chip"><span class="dot nb" style="display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px"></span>Ninh Binh (Nov 5–6)</span>
+      <span class="chip"><span class="dot hanoi" style="display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px"></span>Hanoi (Nov 6–8)</span>
+    </div>
+    <div class="tip">Coordinates are approximate town/landmark points — Google Maps will snap you to the exact spot when you tap Directions. Works great in a phone browser.</div>
+  </div>
+
+  <div class="card">
+    <h3>Route recap</h3>
+    <ul class="tl">
+      <li><span class="t">Nov 2–3</span> PH ✈️ Hanoi (land ~1 AM) → van to Sapa</li>
+      <li><span class="t">Nov 3–4</span> Stay: Madame View Homestay, Sapa</li>
+      <li><span class="t">Nov 4 · 10 PM</span> HK Busline sleeper bus → Ninh Binh (arrive 7 AM)</li>
+      <li><span class="t">Nov 5–6</span> Stay: Airbnb, Tam Coc area</li>
+      <li><span class="t">Nov 6 · 4:51 PM</span> Vietnam Railways train → Hanoi (arrive ~7:12 PM)</li>
+      <li><span class="t">Nov 6–8</span> Stay: Airbnb, Old Quarter area</li>
+      <li><span class="t">Nov 8 · 8:25 AM</span> Fly out from Noi Bai T2 (online check-in the night before)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== SPOTS ==================== -->
+<section id="page-spots" class="page">
+  <div class="card">
+    <div class="kicker">What to do &amp; where</div>
+    <h2>Must-visit spots</h2>
+    <p class="small">Tap any card to expand. Filter by region, or search by name.</p>
+    <div class="searchbar">
+      <input id="spotsearch" type="search" placeholder="Search spots… (e.g. Fansipan)" aria-label="Search spots">
+      <select id="regionfilter" aria-label="Filter by region">
+        <option value="all">All regions</option>
+        <option value="sapa">Sapa</option>
+        <option value="nb">Ninh Binh</option>
+        <option value="hanoi">Hanoi</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="spotlist"></div>
+  <p id="noresults" style="display:none;text-align:center;color:var(--muted);margin:20px 0">No spots match that search.</p>
+
+  <div class="card">
+    <h3>Tourist-trap test (anywhere in Vietnam)</h3>
+    <ul>
+      <li>Vietnamese-language menu ✅</li>
+      <li>Local customers eating there ✅</li>
+      <li>Food cooked hot, in front of you ✅</li>
+      <li>Prices in VND on a simple board ✅</li>
+      <li><b>If all four are true → eat with confidence.</b> Big photo menus + English only = walk away.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== FOOD & SAFETY ==================== -->
+<section id="page-food" class="page">
+  <div class="card">
+    <div class="kicker">Read this first</div>
+    <h2>Food safety rules — how to avoid food poisoning</h2>
+    <ol>
+      <li><b>Eat where the locals eat and it's busy.</b> High turnover = fresh ingredients. A stall with a line of Vietnamese customers beats one waiting for tourists.</li>
+      <li><b>Hot &amp; cooked beats raw &amp; cold.</b> Choose dishes served piping hot (pho, grilled meat, fried rice). Skip raw salads and uncooked herbs unless from a clean shop — they're washed in tap water.</li>
+      <li><b>No ice, no tap water.</b> Sealed bottled water only. Say <i>"không đá"</i> (no ice) to be safe — stall ice is often made from tap water.</li>
+      <li><b>Watch the cook.</b> Clean wok, food kept covered, meat cooked in front of you = good signs.</li>
+      <li><b>Fruit:</b> pick whole fruit you can peel yourself (banana, mango, orange). Avoid pre-cut or uncovered fruit.</li>
+      <li><b>Carry a backup kit:</b> ORS sachets, Imodium, anti-diarrheal wipes. Buy at any pharmacy (<i>"nhà thuốc"</i>) — cheap. Use sparingly; ORS is the main thing if you get hit.</li>
+      <li><b>Alcohol:</b> branded beer (Bia Hanoi, Saigon) in restaurants only. Skip unbranded rice wine from random stalls.</li>
+    </ol>
+    <div class="tip"><b>Philippino-friendly baseline:</b> Vietnamese street food is generally cleaner and hotter-cooked than PH street food. Your biggest risks are (1) ice/tap water, (2) raw herbs/salads, (3) undercooked meat. Follow the rules and you'll be fine.</div>
+    <p style="margin-top:8px">
+      <span class="chip hot">🔥 hot = safest</span>
+      <span class="chip raw">⚠️ raw/cold = be careful</span>
+      <span class="chip kid">👶 kid-friendly</span>
+    </p>
+  </div>
+
+  <!-- Sapa food -->
+  <details class="card spot" data-region="sapa" open>
+    <summary><span class="dot sapa"></span><span class="name">Sapa — must-eats &amp; safe picks</span><span class="chev">▸</span></summary>
+    <div class="body">
+      <ul class="food">
+        <li><span class="fname">Rượu gạo (rice wine)</span> <span class="chip kid" style="filter:saturate(.5)">skip for kids</span> — local specialty, mild &amp; sweet. One small glass at dinner.</li>
+        <li><span class="fname">Xôi + thịt nướng (sticky rice + grilled chicken/pork)</span> <span class="chip hot">🔥</span> — Sapa's signature street food from night-market grills.</li>
+        <li><span class="fname">Lẩu (hotpot)</span> <span class="chip hot">🔥</span><span class="chip kid">👶</span> — broth cooked at the table = safest family dinner option.</li>
+        <li><span class="fname">Phở</span> <span class="chip hot">🔥</span> — fine here, but save your appetite for Hanoi's famous bowls.</li>
+        <li><span class="fname">Bánh cuốn (steamed rice rolls)</span> <span class="chip hot">🔥</span><span class="chip kid">👶</span> — soft, mild, easy on the stomach; good alternative breakfast.</li>
+        <li><span class="fname">Chestnut cake &amp; roasted chestnuts (bánh khoai lang)</span> <span class="chip hot">🔥 if freshly baked</span><span class="chip kid">👶</span> — cold-weather market snack.</li>
+      </ul>
+      <h3>Where to eat, by your plan</h3>
+      <ul>
+        <li><b>Day 1 lunch (Cat Cat):</b> village homestay lunch if you book the tour; otherwise a busy restaurant in town with local families.</li>
+        <li><b>Day 1 dinner (Night Market):</b> grill stall with the longest local queue — grilled corn, xúc xích nướng, sticky rice. Avoid raw skewers &amp; pre-cut fruit.</li>
+        <li><b>Day 2 lunch (Fansipan summit):</b> use the included buffet — don't skip it at 3,000 m.</li>
+        <li><b>Day 2 dinner (~8 PM, before sleeper bus):</b> sit-down hotpot or grilled chicken + rice in town; leave by ~9 for the 10 PM bus. Eat light.</li>
+      </ul>
+      <div class="warn"><b>Sapa caution:</b> tourist-town prices are inflated and quality varies. Big photo menu + English only = likely trap → look for Vietnamese menus with local customers.</div>
+    </div>
+  </details>
+
+  <!-- Ninh Binh food -->
+  <details class="card spot" data-region="nb">
+    <summary><span class="dot nb"></span><span class="name">Ninh Binh — must-eats &amp; safe picks</span><span class="chev">▸</span></summary>
+    <div class="body">
+      <ul class="food">
+        <li><span class="fname">Bún chả Tam Cốc (grilled pork + rice noodles)</span> <span class="chip hot">🔥</span> — Ninh Binh's version of Hanoi's bún chả; the local pride dish.</li>
+        <li><span class="fname">Cơm cháy (crispy fried rice crust)</span> <span class="chip kid">👶</span> — crackly bottom layer of clay-pot rice, beloved regional snack/dish.</li>
+        <li><span class="fname">Xôi + grilled chicken/pork</span> <span class="chip hot">🔥</span> — cheap, hot, filling; great after long walking/cycling days.</li>
+        <li><span class="fname">Chả cá / steamed fish in turmeric broth</span> <span class="chip hot">🔥 cooked at the table</span> — fresh river fish, safe &amp; delicious.</li>
+        <li><span class="fname">Phở bò (beef noodle soup)</span> <span class="chip hot">🔥</span> — solid local bowls, cheaper than Hanoi's famous ones.</li>
+      </ul>
+      <h3>Where to eat, by your plan</h3>
+      <ul>
+        <li><b>Day 3 breakfast (Tam Coc, ~7:30 AM):</b> homestay breakfast, or a local phở stall if open — hot soup is the best start after a 9-hr sleeper bus.</li>
+        <li><b>Day 3 lunch (~12 PM, after Bai Dinh):</b> eat in Tam Coc town on the way back — busy sit-down place, order cơm cháy + grilled chicken or xôi gà. (Bai Dinh's own stalls are basic; town is better &amp; cheaper.)</li>
+        <li><b>Day 3 dinner (Hoa Lu Old Town):</b> limited options — pick the old-town square restaurant with the most local customers, serving grilled fish/chả cá; or head back to Tam Coc for more choice.</li>
+        <li><b>Day 4 breakfast (~5:30 AM):</b> congee (cháo) from homestay or quick bánh mì if a bakery is open — gentle on the stomach before a big day.</li>
+        <li><b>Day 4 lunch (~11–12 PM, last relaxed meal):</b> quick bún chả or phở in Tam Coc; keep to 45 min so you don't rush the 4:51 PM train.</li>
+      </ul>
+      <div class="tip"><b>Ninh Binh food-safety note:</b> rural &amp; less touristy — stick to sit-down places with local customers and hot dishes. Hoa Lu night-market grills are fine for grilled items; skip anything raw or left out uncovered.</div>
+    </div>
+  </details>
+
+  <!-- Hanoi food -->
+  <details class="card spot" data-region="hanoi">
+    <summary><span class="dot hanoi"></span><span class="name">Hanoi — must-eats &amp; safe picks</span><span class="chev">▸</span></summary>
+    <div class="body">
+      <ul class="food">
+        <li><span class="fname">Phở bò / phở gà</span> <span class="chip hot">🔥</span> — the national dish, eaten hot.</li>
+        <li><span class="fname">Bún chả</span> <span class="chip hot">🔥</span> — grilled pork patties + skewers over rice noodles in fish-sauce broth. Hanoi's true lunch icon.</li>
+        <li><span class="fname">Bánh mì</span> <span class="chip kid">👶</span> — the baguette sandwich; classic breakfast or light meal (~25–40k).</li>
+        <li><span class="fname">Bún bò Huế</span> <span class="chip hot">🔥</span> — spicier lemongrass beef noodle soup.</li>
+        <li><span class="fname">Chả cá (turmeric fish, cooked at the table)</span> <span class="chip hot">🔥</span> — with dill &amp; lime. A Hanoi specialty for dinner.</li>
+        <li><span class="fname">Bánh cuốn (steamed rice rolls)</span> <span class="chip hot">🔥</span><span class="chip kid">👶</span> — gentle, safe dish.</li>
+        <li><span class="fname">Nem rán (spring rolls)</span> <span class="chip hot">🔥 order fresh-fried</span> — not pre-made.</li>
+        <li><span class="fname">Chè / desserts (+ bánh flan)</span> <span class="chip kid">👶</span> — sweet soups, easy on the stomach after big meals.</li>
+        <li><span class="fname">Egg coffee (cà phê trứng)</span> <span class="chip hot">order warm</span> — Hanoi's invention; do it once at a proper café.</li>
+      </ul>
+      <h3>Where to eat, by your plan</h3>
+      <ul>
+        <li><b>Day 4 dinner (~7:30 PM, arrival night):</b> busy phở stall in the Old Quarter (phở ~45–60k) or a local bún chả place. Keep it simple and hot.</li>
+        <li><b>Day 5 breakfast:</b> bánh mì from a busy bakery OR phở gà / bún bò Huế for a sit-down start.</li>
+        <li><b>Day 5 lunch — the big one:</b> bún chả at a local favorite such as <b>Bún Chả Hàng Mành</b> (Old Quarter, long-established) or any busy street bún chả stall (~50–70k).</li>
+        <li><b>Day 5 coffee:</b> <b>Café Giang</b> (egg-coffee pioneer) or a cozy Old Quarter café + bánh flan. Expect a short queue — that's fine.</li>
+        <li><b>Day 5 dinner:</b> sit-down local restaurant for chả cá / grilled fish family meal — Vietnamese menus + local families, no English-only photo menus.</li>
+        <li><b>Day 5 evening:</b> night stroll + one small bite (nem rán or chè) if hungry. Keep it light — flight day tomorrow.</li>
+        <li><b>Day 6 breakfast (~4 AM):</b> quick bánh mì from an open bakery; no raw salad inside if you're cautious.</li>
+      </ul>
+      <div class="warn"><b>Avoid / be careful:</b> raw herb salads and uncooked phở herbs (skip if cautious), pre-cut fruit, ice in drinks (<i>"không đá"</i>), and any stall with no local customers. Everything above is safe when served hot from a busy place.</div>
+    </div>
+  </details>
+
+  <div class="card">
+    <h3>Daily budget guide (VND, per person)</h3>
+    <ul>
+      <li><b>Phở / bún chả / bánh mì:</b> ~25–70k</li>
+      <li><b>Sit-down family dinner (chả cá, grilled fish):</b> ~120–250k</li>
+      <li><b>Hotpot dinner:</b> ~150–300k</li>
+      <li><b>Egg coffee + bánh flan:</b> ~60–100k</li>
+      <li><b>Sapa market snacks (corn, sausage, chestnut cake):</b> ~20–50k each item</li>
+      <li><b>Entry fees already noted per spot</b> (Rong May 150k · Green Valley 100k · Văn Miếu 30–50k · Hoa Lu temples ~20k · puppetry 150–250k)</li>
+      <li><b>Rough day totals from the Itinerary tab:</b> Sapa days ~200–400k food + activities; Ninh Binh days ~150–350k; Hanoi full day ~400–650k.</li>
+    </ul>
+    <p class="small">Prices are typical 2024–25 street/local levels — expect ±20% in touristy areas. Cash is king: most stalls don't take cards.</p>
+  </div>
+</section>
+
+<!-- ==================== PACK LIST ==================== -->
+<section id="page-pack" class="page">
+  <div class="card">
+    <div class="kicker">Bringing home + staying well</div>
+    <h2>Souvenirs &amp; practical notes</h2>
+    <h3>Good souvenirs (light + safe to bring home)</h3>
+    <ul>
+      <li><b>Coffee:</b> Trung Nguyen or G7 instant, or roasted beans — Vietnam's #1 souvenir.</li>
+      <li><b>Fish sauce (nước mắm):</b> sealed bottle; carry-on liquid rules apply → <b>checked bag is safer</b>.</li>
+      <li><b>Dried fruits / snacks:</b> mango chips, dried longan, coconut candy from the market.</li>
+      <li><b>Silk &amp; handicrafts:</b> silk scarves (Old Quarter), woven bags from Sapa night market. Haggle gently.</li>
+      <li><b>Ceramics:</b> possible but fragile — skip with kids in tow unless careful.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Packing &amp; logistics checklist</h3>
+    <ul>
+      <li><span class="chip hot">🔥</span> <b>Pharmacy kit:</b> ORS sachets, Imodium, band-aids, personal meds. Any pharmacy (<i>"nhà thuốc"</i>) stocks them cheaply — restock there.</li>
+      <li><span class="chip kid">👶</span> <b>Sapa in November is cold:</b> 10–15 °C in town, 5–10 °C on Fansipan summit → warm jacket + closed shoes for the whole family.</li>
+      <li><b>Sleeper bus (9 hrs):</b> snacks, neck pillow, power bank. Download offline maps before leaving Sapa — mountain route has patchy signal.</li>
+      <li><b>Money:</b> withdraw VND at ATMs or exchange at banks/offices — avoid airport rates. Cash first; some restaurants take cards.</li>
+      <li><b>Sealed bottled water only</b>; "không đá" (no ice) in drinks if you're cautious.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Flight-day (Nov 8) timing</h3>
+    <ul class="tl">
+      <li><span class="t">Night before</span> Online check-in for flight 5J 745; pack everything, early sleep after Day 5.</li>
+      <li><span class="t">4:00 AM</span> Wake up &amp; prep</li>
+      <li><span class="t">6:00 AM</span> At Noi Bai T2 (international boarding closes early — don't cut it close)</li>
+      <li><span class="t">8:25 AM</span> Depart → land NAIA T3 ~1:15 PM</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,#7a2e22,#c0392b);color:#fff;border:none">
+    <h3 style="color:#ffd9d4">Chúc mừng chuyến đi! 🇻🇳</h3>
+    <p style="opacity:.95">Hot + busy + local = safe. No ice, no tap water, peel your own fruit.<br>Have an amazing trip!</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Vietnam Trip Guide · Nov 2–8, 2026 · companion to <b>vietnam_itinerary_plan.md</b><br>
+  Self-contained HTML — works on GitHub Pages and offline (map tiles need internet). Prices are typical 2024–25 street/local VND.
+</footer>
+
+<button id="totop" title="Back to top">↑</button>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ---------- SPOTS DATA (single source for map + cards) ---------- */
+var SPOTS=[
+ /* --- Sapa --- */
+ {id:"catcat",name:"Cat Cat Village",region:"sapa",lat:22.334,lng:103.835,when:"Day 1 · ~11 AM–2 PM",fee:null,kid:true,
+  desc:"Hmong ethnic village 2 km from town — stilt houses and rice terraces (~3 hrs incl. lunch). Walk the trail yourself (~45 min) if everyone is up for it.",
+  tip:"Village homestay lunch is home-cooked & busy = safe. Buy small handicrafts (scarves, woven bags); haggle gently."},
+ {id:"moana",name:"Moana Cafe",region:"sapa",lat:22.3355,lng:103.849,when:"Day 1 · ~2:10 PM (drop if tired)",fee:null,kid:true,
+  desc:"Riverside cafe with mountain views — coffee + rest between activities.",
+  tip:"Sit on the terrace side; order cà phê phin or hot chocolate — skip iced drinks."},
+ {id:"mong",name:"Mong Village · Alpine Coaster",region:"sapa",lat:22.341,lng:103.862,when:"Day 1 · ~3:10 PM (30 min)",fee:null,kid:true,
+  desc:"Family-friendly cable coaster through rice terraces — fun for kids, mild thrill for adults.",
+  tip:"Go right after lunch; afternoon light is best for photos. Chestnut cake (bánh khoai lang) sold nearby if freshly baked."},
+ {id:"sapanight",name:"Sapa Night Market",region:"sapa",lat:22.3364,lng:103.8452,when:"Day 1 · evening",fee:null,kid:true,
+  desc:"Handicrafts, dried meat, street snacks — lively & touristy but safe if you pick busy stalls.",
+  tip:"Best snack: grilled corn + grilled sausage (xúc xích nướng) from a stall with a local queue. Avoid raw fruit skewers left uncovered."},
+ {id:"fansipan",name:"Fansipan Cable Car (Sun Station)",region:"sapa",lat:22.3395,lng:103.8617,when:"Day 2 · 8 AM–1 PM",fee:null,kid:true,
+  desc:"Highest peak in Indochina (3,143 m): cable car + summit walk; buffet lunch included.",
+  tip:"Nov is cool — summit 5–10 °C, bring a warm jacket. Eat the included buffet at altitude."},
+ {id:"rongmay",name:"Rong May · Cloud Dragon Glass Bridge",region:"sapa",lat:22.3445,lng:103.8297,when:"Day 2 · ~2:40 PM (~1 hr)",fee:"~150k VND/person",kid:false,
+  desc:"Glass-bottom bridge over a canyon — short but dramatic photo stop.",
+  tip:"If anyone is scared of heights, just enjoy the viewing deck — same view, no glass-floor fee needed for photos from below."},
+ {id:"greenvalley",name:"Green Valley (Sapa)",region:"sapa",lat:22.3300,lng:103.8750,when:"Day 2 · ~4:20 PM (~1 hr)",fee:"~100k VND entry",kid:true,
+  desc:"Theme park: rainbow slide + Mario-kart-style track — purely a kids' fun stop.",
+  tip:"Commercial & safe. Keep cash ready for entry."},
+ {id:"sapatown",name:"Sapa Town Center + Waterfall",region:"sapa",lat:22.3370,lng:103.8480,when:"Free time / sunset stroll",fee:null,kid:true,
+  desc:"Small town square; Sapa waterfall is a 5-min walk from center — easy sunset stroll before dinner.",
+  tip:"Good place to grab a hot drink and rest legs after Day 2's activities."},
+ /* --- Ninh Binh --- */
+ {id:"baidinh",name:"Bai Dinh Pagoda",region:"nb",lat:20.2438,lng:105.9476,when:"Day 3 · ~9 AM–12 PM",fee:"free (donations welcome)",kid:true,
+  desc:"Largest pagoda complex in Vietnam — 200 m of halls, giant Buddha statue, 5,000+ steps to the top.",
+  tip:"Wear closed shoes. Go as far as energy allows and turn back; lower halls + big Buddha already worth it."},
+ {id:"hoalu",name:"Hoa Lu Ancient Capital",region:"nb",lat:20.2637,lng:105.9478,when:"Day 3 · ~2:20–5 PM (cycling)",fee:"~20k VND/temple",kid:true,
+  desc:"Vietnam's first capital (10th–11th c.) — Dinh & Le temples, quiet and green.",
+  tip:"Cycling around town is flat & easy. Temples have small entry fees."},
+ {id:"hoaluantown",name:"Hoa Lu Old Town + Lantern Boat",region:"nb",lat:20.2651,lng:105.9442,when:"Day 3 · ~5:15–8 PM",fee:null,kid:true,
+  desc:"Small old-town square with a night market; lantern boat on the river = nice sunset photo moment.",
+  tip:"Night market is small — expect snacks, not shopping. Dinner options limited here (see Food tab)."},
+ {id:"hangmua",name:"Hang Múa Viewpoint",region:"nb",lat:20.2615,lng:105.9113,when:"Day 4 · ~6:15 AM (sunrise)",fee:null,kid:false,
+  desc:"~500-step hike to a limestone-ridge viewpoint over rice fields & the Tam Coc river.",
+  tip:"Early start beats crowds and heat — smart. Bring water; steep but doable for fit adults. Kids can wait at base or join halfway."},
+ {id:"trangian",name:"Trang An Grottoes Boat Trip",region:"nb",lat:20.2736,lng:105.9044,when:"Day 4 · ~7–10 AM (3 hrs)",fee:"boat + tip ~20–50k/crew",kid:true,
+  desc:"Rowboat through limestone caves & karst scenery — the signature Ninh Binh experience.",
+  tip:"Morning is best. Life jackets provided; bring cash for crew tips."},
+ {id:"bichdong",name:"Bích Động Pagoda",region:"nb",lat:20.2566,lng:105.9386,when:"Day 4 · ~12:10–1 PM (by bike)",fee:null,kid:true,
+  desc:"Pagoda inside a cave with a short, easy climb — smaller & calmer than Bai Dinh.",
+  tip:"Combine with the bike ride to Tam Coc; both are close together."},
+ {id:"tamcoc",name:"Tam Coc (Three Gaps)",region:"nb",lat:20.2588,lng:105.9222,when:"Day 4 · ~1:10–3:30 PM (by bike)",fee:null,kid:true,
+  desc:"The classic “Halong Bay on land” scenery — short boat through the gaps or cycle/walk the riverside.",
+  tip:"Boat is cheap (~10–20 min per gap). If tired, drop this loop — Trang An already showed you the scenery."},
+ /* --- Hanoi --- */
+ {id:"oldquarter",name:"Old Quarter (36 Old Streets)",region:"hanoi",lat:21.0334,lng:105.8517,when:"Day 4–5 · main base & walk area",fee:null,kid:true,
+  desc:"Hanoi's historic core — temples, cafés, street food. Best explored on foot.",
+  tip:"Base yourself here if your Airbnb isn't already in the Old Quarter."},
+ {id:"hoankiem",name:"Hoan Kiem Lake + Ngoc Son Temple",region:"hanoi",lat:21.0282,lng:105.8542,when:"Day 5 · ~8:30–10:30 AM",fee:null,kid:true,
+  desc:"The heart of Hanoi — bridge, lake loop walk, small island temple.",
+  tip:"Morning or sunset is prettiest; the ~40-min lake loop is an easy family walk."},
+ {id:"trainstreet",name:"Train Street (Phan Bội Châu)",region:"hanoi",lat:21.0366,lng:105.8539,when:"Best ~7–9 AM if you go early",fee:null,kid:true,
+  desc:"The famous “train passes between houses” spot — viral; now partly managed/timed by locals.",
+  tip:"Short and free — don't build a whole day around it. If Day 5 is late afternoons, treat it as a street visit."},
+ {id:"cathedral",name:"St. Joseph's Cathedral",region:"hanoi",lat:21.0273,lng:105.8496,when:"Day 5 · en route to/from lake",fee:null,kid:true,
+  desc:"Beautiful Gothic cathedral, ~5 min from Hoan Kiem.",
+  tip:"Free entry (quiet hours apply); great photo stop between meals."},
+ {id:"vanmieu",name:"Temple of Literature (Văn Miếu)",region:"hanoi",lat:21.0270,lng:105.8333,when:"Day 5 · ~1:30–3 PM",fee:"~30–50k VND",kid:true,
+  desc:"Vietnam's first university (1070) — quiet garden, ~2 km from the lake.",
+  tip:"A calm cultural stop; good mid-morning break."},
+ {id:"eggcoffee",name:"Egg Coffee experience (Café Giang)",region:"hanoi",lat:21.0358,lng:105.8499,when:"Day 5 · ~10:45–11:30 AM",fee:null,kid:true,
+  desc:"Hanoi's invention — coffee topped with a sweet egg-yolk “ice cream”.",
+  tip:"Do it once at a proper café (Café Giang is the historic spot); expect a short queue. Order warm."},
+ {id:"puppetry",name:"Water Puppetry Show (Thang Long)",region:"hanoi",lat:21.0295,lng:105.8560,when:"Day 5 · ~7:30 PM slot (optional)",fee:"~150–250k VND",kid:true,
+  desc:"30-min traditional show right by Hoan Kiem — very family-friendly.",
+  tip:"Showtimes ~2 PM & 7:30 PM. A nice low-energy evening option if the family is tired; most-optional item of Day 5."},
+ {id:"hanoimarket",name:"Old Quarter Night Market / Street Food Crawl",region:"hanoi",lat:21.0340,lng:105.8470,when:"Day 4 & 5 · evenings",fee:null,kid:true,
+  desc:"Where Hanoi's food shines — crawl slowly, eat small portions of many things.",
+  tip:"Stop when full; keep Day 5 light before the flight day."}
+];
+var REGIONCOLOR={sapa:"#c0392b",nb:"#1e7d4f",hanoi:"#2563a8"};
+
+/* ---------- SPOT CARDS ---------- */
+var listEl=document.getElementById("spotlist");
+function regionLabel(r){return r==="sapa"?"Sapa":r==="nb"?"Ninh Binh":"Hanoi";}
+function gmapsDir(s){return "https://www.google.com/maps/dir/?api=1&destination="+s.lat+","+s.lng;}
+function buildCards(){
+  listEl.innerHTML="";
+  SPOTS.forEach(function(s){
+    var d=document.createElement("details");
+    d.className="card spot";
+    d.dataset.region=s.region;
+    d.dataset.id=s.id;
+    var meta=regionLabel(s.region)+(s.fee?" · "+s.fee:"")+(s.when?" · "+s.when:"");
+    d.innerHTML='<summary><span class="dot '+s.region+'"></span>'
+      +'<span class="name">'+s.name+'</span>'
+      +'<span class="meta">'+meta.replace(/</g,"&lt;")+'</span>'
+      +'<span class="chev">▸</span></summary>'
+      +'<div class="body"><p>'+s.desc+' <b>Tip:</b> '+s.tip+'</p>'
+      +(s.kid?'<p style="margin-top:4px"><span class="chip kid">👶 kid-friendly</span></p>':'')
+      +'<p style="margin-top:6px"><a href="'+gmapsDir(s)+'" target="_blank" rel="noopener">📍 Directions (Google Maps) →</a>'
+      +' <span class="small">(approx. point — Google will snap to the exact spot)</span></p></div>';
+    listEl.appendChild(d);
+  });
+}
+buildCards();
+
+/* ---------- SEARCH & FILTER ---------- */
+var searchEl=document.getElementById("spotsearch");
+var filterEl=document.getElementById("regionfilter");
+var noRes=document.getElementById("noresults");
+function applyFilter(){
+  var q=searchEl.value.toLowerCase(), r=filterEl.value, shown=0;
+  Array.prototype.forEach.call(listEl.children,function(d){
+    var name=d.querySelector(".name").textContent.toLowerCase();
+    var match=(q===""||name.indexOf(q)>-1)&&(r==="all"||d.dataset.region===r);
+    d.style.display=match?"":"none";
+    if(match)shown++;
+  });
+  noRes.style.display=shown?"none":"";
+}
+searchEl.addEventListener("input",applyFilter);
+filterEl.addEventListener("change",applyFilter);
+
+/* ---------- MAP (lazy init when Map tab first opened) ---------- */
+var map=null, mapInited=false;
+function initMap(){
+  if(mapInited)return;
+  mapInited=true;
+  var m=L.map("map",{scrollWheelZoom:false});
+  var base=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    {maxZoom:19,attribution:"Tiles © Esri — World Topo Map"});
+  /* fallback if the primary tile source is blocked/unavailable (no API key needed for either) */
+  base.on("tileerror",function(){
+    if(m._fb)return; m._fb=true;
+    base.setUrl("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png");
+  });
+  base.addTo(m);
+  SPOTS.forEach(function(s){
+    var mk=L.circleMarker([s.lat,s.lng],{radius:7,color:REGIONCOLOR[s.region],fillColor:REGIONCOLOR[s.region],fillOpacity:.85,weight:2});
+    mk.bindPopup('<b>'+s.name+'</b><br>'+regionLabel(s.region)+(s.fee?'<br>💰 '+s.fee:'')+'<br>'+(s.when||'')+'<br><a href="'+gmapsDir(s)+'" target="_blank">📍 Directions →</a>');
+    mk.addTo(m);
+  });
+  m.fitBounds(L.latLngBounds(SPOTS.map(function(s){return [s.lat,s.lng];})).pad(.25));
+}
+
+/* ---------- TABS ---------- */
+var tabs=document.querySelectorAll("nav.tabs button");
+function showTab(name,btn){
+  Array.prototype.forEach.call(tabs,function(b){b.classList.toggle("active",b===btn||b.dataset.tab===name);});
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active");});
+  document.getElementById("page-"+name).classList.add("active");
+  if(name==="map"){initMap();setTimeout(function(){map&&map.invalidateSize();},120);}
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+tabs.forEach(function(b){b.addEventListener("click",function(){showTab(b.dataset.tab,b);});});
+
+/* deep links from other pages */
+document.querySelectorAll("[data-goto]").forEach(function(a){
+  a.addEventListener("click",function(e){e.preventDefault();var t=a.dataset.goto;var btn=document.querySelector('nav.tabs button[data-tab="'+t+'"]');showTab(t,btn);});
+});
+
+/* ---------- DAY-5 FULL / RELAXED TOGGLE ---------- */
+var d5fullBtn=document.getElementById("d5full"), d5relBtn=document.getElementById("d5relaxed");
+function setD5(full){
+  document.getElementById("d5-full").style.display=full?"":"none";
+  document.getElementById("d5-relaxed").style.display=full?"none":"";
+  d5fullBtn.classList.toggle("active",full);
+  d5relBtn.classList.toggle("active",!full);
+}
+d5fullBtn.addEventListener("click",function(){setD5(true);});
+d5relBtn.addEventListener("click",function(){setD5(false);});
+
+/* ---------- DARK MODE (persisted) ---------- */
+var darkbtn=document.getElementById("darkbtn");
+function applyTheme(dark){document.documentElement.classList.toggle("dark",dark);darkbtn.textContent=dark?"☀️":"🌙";}
+applyTheme(localStorage.getItem("vn_dark")==="1");
+darkbtn.addEventListener("click",function(){var on=!document.documentElement.classList.contains("dark");applyTheme(on);localStorage.setItem("vn_dark",on?"1":"0");});
+
+/* ---------- BACK TO TOP ---------- */
+var totop=document.getElementById("totop");
+window.addEventListener("scroll",function(){totop.style.display=window.scrollY>400?"block":"none";},{passive:true});
+totop.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});
+</script>
+</body>
+</html>
